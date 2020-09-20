@@ -1,0 +1,44 @@
+﻿@page "/fetchdata"
+
+@using Lab_5.Data
+@inject AdService adService
+
+<h1>Объявления</h1>
+
+<p>Объявления, созданные рандомайзером.</p>
+
+@if (adService == null)
+{
+    <p><em>Загрузка...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Цена</th>
+                <th>Дата публикации</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ad in ads)
+            {
+                <tr>
+                    <td>@ad.Name</td>
+                    <td>@ad.Price</td>
+                    <td>@ad.PublishDate.ToShortDateString()</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private Ad[] ads;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ads = await adService.GetAdsAsync(DateTime.Now);
+    }
+}
