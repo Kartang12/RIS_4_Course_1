@@ -7,6 +7,5 @@
         public static string subjects = "subjects.txt"; // список предметов (лежит в корневой)
         public static string students = "students.txt"; // список студентов (лежит в корневой)
         public static char[] validSigns = {'+', '-'}; //отмечает присутствие(отсутствие на лекции)
-
     }
 }
