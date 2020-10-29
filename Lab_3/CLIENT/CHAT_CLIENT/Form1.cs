@@ -12,10 +12,10 @@ namespace CHAT_CLIENT
     public partial class Form1 : Form
     {
         List<string> subjects;
-        List<DateTime> classesDates;
+        List<DateTime> classesDates = new List<DateTime>();
         List<string> students;
         List<string> marks;
-        
+
         Dictionary<string, string> studentsD;
 
         private const string host = "127.0.0.1";
@@ -41,7 +41,7 @@ namespace CHAT_CLIENT
             students = RecieveData().Split(';').ToList<string>();
             studentsD = new Dictionary<string, string>();
             marks = new List<string>();
-            foreach (string st in students) 
+            foreach (string st in students)
             {
                 studentsD.Add(st, "-");
                 marks.Add("-");
@@ -56,7 +56,7 @@ namespace CHAT_CLIENT
             StudentsGrid.DataSource = studentsTable.ToArray();
 
             subjectCol.DataPropertyName = "subject";
-            SubjectGrid.DataSource = subjects.Select(x => new { subject= x }).ToList();
+            SubjectGrid.DataSource = subjects.Select(x => new { subject = x }).ToList();
 
             dateCol.DataPropertyName = "date";
         }
@@ -136,16 +136,19 @@ namespace CHAT_CLIENT
         private void AddBtn_Click(object sender, EventArgs e)
         {
             DateTime dt = DateTime.Now;
-            string newDate = dt.Date.ToString().Replace("0:00:00", dt.Hour + ":00:00");
-            
+            //string newDate = dt.Date.ToString().Replace("00:00:00", dt.Hour + ":00:00");
+            string newDate = dt.ToString();
+            classesDates = new List<DateTime>();
             classesDates.Add(DateTime.Parse(newDate));
-            int length = DateGrid.Rows.Count;
+
             DateGrid.DataSource = classesDates.Select(x => new { date = x }).ToList();
+            int length = DateGrid.Rows.Count;
             foreach (DataGridViewRow row in DateGrid.Rows)
             {
-                   row.Selected = true;
+                row.Selected = true;
             }
-            DateGrid.Rows[length].Selected = true;
+            if (length > 0)
+                DateGrid.Rows[length - 1].Selected = true;
         }
 
         private void StudentsGrid_RowHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
@@ -156,7 +159,7 @@ namespace CHAT_CLIENT
             var _priceDataArray = from row in studentsD select new { Student = row.Key, Mark = row.Value };
             StudentsGrid.DataSource = _priceDataArray.ToArray();
         }
-        
+
         private string ChangeMark()
         {
             if (StudentsGrid.SelectedRows[0].Cells[1].Value.ToString() == "-")
@@ -178,7 +181,10 @@ namespace CHAT_CLIENT
             SendRequest("getDates");
             SendRequest(SubjectGrid.CurrentCell.Value.ToString());
 
-            var rawDate = RecieveData().Split(';');
+            var income = RecieveData();
+            if (income == "0")
+                return;
+            var rawDate = income.Split(';');
             if (rawDate[0] == "_")
             {
                 DateGrid.DataSource = new List<string>().Select(x => new { date = x }).ToList();

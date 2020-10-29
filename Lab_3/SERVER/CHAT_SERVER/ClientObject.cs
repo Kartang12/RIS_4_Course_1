@@ -32,27 +32,27 @@ namespace CHAT_SERVER
                 string request;
                 while (true)
                 {
-                        request = RecieveRequest();
-                        Console.WriteLine("Incoming request "+ request);
+                    request = RecieveRequest();
+                    Console.WriteLine("Incoming request " + request);
+                    try
+                    {
+                        Requests.sendList[request].Invoke();
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
                         try
                         {
                             Requests.sendList[request].Invoke();
                         }
-                        catch(IndexOutOfRangeException)
+                        catch (IndexOutOfRangeException)
                         {
-                            try 
-                            {
-                                Requests.sendList[request].Invoke();
-                            }
-                            catch (IndexOutOfRangeException)
-                            {
-                                Console.WriteLine("No such request in list");
-                            }
-                            catch (Exception)
-                            {
-                                Console.WriteLine("Request <" + request + "> failed");
-                            }
+                            Console.WriteLine("No such request in list");
                         }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Request <" + request + "> failed");
+                        }
+                    }
                 }
             }
             catch (Exception e)
@@ -93,23 +93,32 @@ namespace CHAT_SERVER
                 data = Encoding.Unicode.GetBytes(subjects);
                 stream.Write(data, 0, data.Length);
             }
-            public static void SendDates() 
+            public static void SendDates()
             {
                 try
                 {
                     string subject = RecieveRequest();
                     Console.WriteLine(subject);
-                    string dates = string.Join(";", GetDates(subject));
+                    var tempDates = GetDates(subject);
+                    if (tempDates == null)
+                    {
+                        byte[] tmp = Encoding.Unicode.GetBytes("0");
+                        stream.Write(BitConverter.GetBytes(tmp.Length), 0, 4);
+                        stream.Write(tmp, 0, tmp.Length);
+                        return;
+                    }
+                    string dates = string.Join(";", tempDates);
                     byte[] data = BitConverter.GetBytes(dates.Length);
                     stream.Write(data, 0, data.Length);
                     data = Encoding.Unicode.GetBytes(dates);
                     stream.Write(data, 0, data.Length);
                 }
-                catch (Exception ex) {
+                catch (Exception ex)
+                {
                     Console.WriteLine(ex.StackTrace);
                 }
             }
-            public static void SendStudents() 
+            public static void SendStudents()
             {
                 string students = string.Join(";", GetStudents());
                 byte[] data = BitConverter.GetBytes(students.Length);
@@ -117,11 +126,11 @@ namespace CHAT_SERVER
                 data = Encoding.Unicode.GetBytes(students);
                 stream.Write(data, 0, data.Length);
             }
-            public static void SendMarks() 
+            public static void SendMarks()
             {
                 string subject = RecieveRequest();
                 Console.WriteLine("\tSubject = " + subject);
-                string date = RecieveRequest().Replace(':','^');
+                string date = RecieveRequest().Replace(':', '^');
                 Console.WriteLine("\tdate = " + date);
                 string dates = string.Join(";", GetMarks(subject, date));
                 byte[] data = BitConverter.GetBytes(dates.Length);
@@ -129,10 +138,10 @@ namespace CHAT_SERVER
                 data = Encoding.Unicode.GetBytes(dates);
                 stream.Write(data, 0, data.Length);
             }
-            public static void SaveReport() 
+            public static void SaveReport()
             {
                 string subject = RecieveRequest();
-                string date = RecieveRequest().Replace(':','^');
+                string date = RecieveRequest().Replace(':', '^');
                 string[] marks = RecieveRequest().Split(';');
                 using (StreamWriter sw = File.CreateText(Paths.root + Paths.subjects + subject + "\\" + date + ".txt"))
                 {
@@ -145,7 +154,7 @@ namespace CHAT_SERVER
             }
             static string[] GetMarks(string subject, string date)
             {
-                return File.ReadAllLines(Paths.root + Paths.subjects + subject + 
+                return File.ReadAllLines(Paths.root + Paths.subjects + subject +
                     "\\" + date + ".txt");
             }
             static string[] GetSubjects()
@@ -160,13 +169,14 @@ namespace CHAT_SERVER
             {
                 DirectoryInfo di = new DirectoryInfo(Paths.root + Paths.subjects + subject);
                 FileInfo[] dates = di.GetFiles();
-                string[] strDates = new string[dates.Length];
                 if (dates.Length == 0)
-                    return new string[] { "_"};
+                    return null;
 
-                for (int i=0; i< dates.Length; i++)
+                string[] strDates = new string[dates.Length];
+
+                for (int i = 0; i < dates.Length; i++)
                 {
-                    strDates[i] = dates[i].Name; 
+                    strDates[i] = dates[i].Name;
                 }
                 return strDates;
             }
